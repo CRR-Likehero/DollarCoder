@@ -1,0 +1,9 @@
+/* /Shared/MainLayout.razor.rz.scp.css */
+.page[b-jn5ukfi13o] {
+    display: flex;
+    flex-direction: column;
+}
+
+main[b-jn5ukfi13o] {
+    flex: 1;
+}
