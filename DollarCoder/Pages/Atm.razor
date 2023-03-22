@@ -1,0 +1,133 @@
+﻿@page "/atm"
+@using DollarCoder.Models
+@inject AtmMachine AtmMachine;
+@inject Player Player;
+@inject Game Game;
+@implements IDisposable;
+
+<PageTitle>DollarCoder - atm</PageTitle>
+
+<div class="atmbackground">
+    <div class="topcontainer">
+        <p>Software Dollars $</p>
+        <a href="/">Go to job --></a>
+    </div>
+
+    <div class="middlecontainer">
+        @if (Player.LoggedIn == false) {
+            <div class="pincodecontainer">
+                <p>Enter Pin</p>
+                <input @bind="code" type="password" placeholder="Insert pin code" class="pininput" />
+                <button @onclick="() => AtmMachine.SearchForPin(code)">Login to bank</button>
+            </div>
+
+        } else {
+            <div class="@(Toggler ? "hideatmelements" : "pincodecontainer")">
+                <p class="@(Toggler ? "hideatmelements" : "")">Welcome @Player.Name</p>
+                <p class="@(Toggler ? "hideatmelements" : "")">Select an option</p>
+                <ul class="@(Toggler ? "hideatmelements" : "atmmenu")">
+                    <li @onclick="() => ToggleMenu(1)">1. Total balance</li>
+                    <li @onclick="() => ToggleMenu(2)">2. Deposit</li>
+                    <li @onclick="() => ToggleMenu(3)">3. Withdraw</li>
+                    <li @onclick="Player.LogOut">4. Exit</li>
+                </ul>
+            </div>
+
+            if(SelectedMenu == 1) {
+                <div class="pincodecontainer">
+                    <p>Current Balance</p>
+                    <p>@AtmMachine.Balance $</p>
+                    <button @onclick="UnToggleMenu">Back</button>
+                </div>
+            } else if (SelectedMenu == 2) {
+                <div class="pincodecontainer">
+                    <p>Deposit $</p>
+                    <p>@(AtmMachine.Error ? ErrorMessage : "")</p>
+                    <p>@(AtmMachine.Error ? "" : SuccesMessageDeposit)</p>
+                    <input @bind="AtmMachine.DepositAmount" placeholder="Enter the amount of $ to deposit"/>
+                    <button @onclick="AtmMachine.Deposit" @onmouseup="SuccesDeposit">Deposit $</button>
+                    <button @onclick="UnToggleMenu">Back</button>
+                </div>
+            } else if (SelectedMenu == 3) {
+                <div class="pincodecontainer">
+                    <p>Withdraw $</p>
+                    <p>@(AtmMachine.Error ? ErrorMessage : "")</p>
+                    <p>@(AtmMachine.Error ? "" : SuccesMessageWithdraw)</p>
+                    <input @bind="AtmMachine.WithDrawAmount" placeholder="Enter the amount of $ to withdraw" />
+                    <button @onclick="AtmMachine.WithDraw" @onmouseup="SuccesWithdraw">Withdraw $</button>
+                    <button @onclick="UnToggleMenu">Back</button>
+                </div>
+            } 
+
+
+
+        }
+
+    </div>
+
+    <div class="bottomcontainer">
+        <div class="bagcontainer">
+            <img @onclick="() => ToggleMenu(8)" src="./img/bag.png" class="bag" />
+        </div>
+        <div class="briefcasecontainer">
+            @if (Game.dollars < 1)
+            {
+                <img src="./img/briefcaseempty.png" class="breifcase" />
+            }
+            else
+            {
+                <img src="./img/briefcasefull.png" class="breifcase" />
+            }
+            <p> @Game.dollars $</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    //Input
+    public string code { get; set; }
+
+    //Error Message handler
+
+    public string ErrorMessage = "Wrong amount";
+
+    //Succes Message
+
+    public string SuccesMessageWithdraw = "";
+    public string SuccesMessageDeposit = "";
+
+    public void SuccesWithdraw()
+    {
+        SuccesMessageWithdraw = $"You Withdrawed: {AtmMachine.WithDrawAmount}$";
+    }
+
+    public void SuccesDeposit()
+    {
+        SuccesMessageDeposit = $"You Deposited: {AtmMachine.DepositAmount}$";
+    }
+
+    // Atm Menu UI togglers
+    public bool Toggler = false;
+    public int SelectedMenu { get; set; }
+
+    public void ToggleMenu(int selectedmenu)
+    {
+        Toggler = true;
+        SelectedMenu = selectedmenu;
+    }
+
+    public void UnToggleMenu()
+    {
+        Toggler = false;
+        SelectedMenu = 0;
+    }
+
+    // Dispose er fra injected interface og metoden kører når der skiftes side
+    public void Dispose()
+    {
+        Player.LoggedIn = false;
+    }
+
+
+}
+

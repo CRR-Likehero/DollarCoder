@@ -1,0 +1,242 @@
+﻿@page "/"
+@using DollarCoder.Models
+@inject Game Game;
+@inject Player Player;
+@inject HttpClient Http;
+@inject ItemShop ItemShop;
+@inject CoursesShop CoursesShop;
+@inject CodeEditor CodeEditor;
+@inject RandomCode RandomCode;
+@inject IJSRuntime JavaScript;
+
+
+<PageTitle>DollarCoder - workspace</PageTitle>
+<div class="background">
+
+    @*Spawns the money every 10 keystroke and reduces energy*@
+    @if(Game.counter == 9)
+    {
+        SpawnFallingImg();
+        
+        DecreaseEnergyBar();
+    }
+
+    <div class="topcontainer">
+        <p>Software Dollars $</p>
+        <div id="energybar">
+            <div class="progress">@Player.Energy %</div>
+        </div>
+        <a href="/atm">Go to Bank --></a>
+    </div>
+    
+    <div class="middlecontainer">
+        @if (Player.PlayeHavePin == false) {
+
+            <div class="createpincodebackground">
+                <p>Please create a name & pincode for you creditcard before coding</p>
+                <input @bind="Player.Name" type="text" placeholder="Insert Name" class="pininputpc"/>
+                <input @bind="Player.PinCode" type="password" placeholder="Insert pin code" class="pininputpc" />
+                <button @onclick="Player.AddPincode">Create Pin Code</button>
+            </div>
+
+        } else {
+
+            if (SelectedMenu == 0) {
+
+                <div class="pccontainericons">
+                    <div @ondblclick="() => ToggleMenu(1)" class="pcicons" id="shopiconshop"><div><p>Shop</p></div></div>
+                    <div @ondblclick="() => ToggleMenu(2)" class="pcicons" id="shopiconpcshop"><div><p>PcShop</p></div></div>
+                    <div @ondblclick="() => ToggleMenu(3)" class="pcicons" id="shopiconcodeeditor"><div><p>CodeEditor</p></div></div>
+                    <div @ondblclick="() => ToggleMenu(4)" class="pcicons" id="shopiconcourses"><div><p>Courses</p></div></div>
+                    <div @ondblclick="() => ToggleMenu(5)" class="pcicons" id="shopiconachivements"><div><p>Achivements</p></div></div>
+                    <div @ondblclick="() => ToggleMenu(6)" class="pcicons" id="shopiconfaq"><div><p>Faq</p></div></div>
+                    <div @ondblclick="() => ToggleMenu(7)" class="pcicons" id="shopiconsettings"><div><p>Settings</p></div></div>
+                </div>
+
+            } else if (SelectedMenu == 1) {
+                <div class="pccontainer shop">
+                    <div class="globalshopheader">
+                        <button @onclick="UnToggleMenu">Back</button>
+                        <input value="www.nemlig.com" />
+                        <p>Best Browser</p>
+                    </div>
+                    <div class="shopitemcontainer">
+                        @foreach(FoodItems item in ItemShop.FoodItems) {
+                            <div class="item">
+                                <img src="@item.LocalImg" class="itemimg" />
+                                <p>@item.Name</p>
+                                <p>Price: @item.Price $</p>
+                                @if (AtmMachine.Balance < item.Price)
+                                {
+                                    <button class="itembtn">Not enough money</button>
+                                }
+                                else
+                                {
+                                    <button @onclick="() => Player.BuyItem(item)" class="itembtn">Buy</button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            } else if (SelectedMenu == 2) {
+                <div class="pccontainer">
+                    <button @onclick="UnToggleMenu">Back</button>
+                    <p>Pc Shop</p>
+                </div>
+            } else if (SelectedMenu == 3)
+            {
+                if(Player.Energy == 0) {
+                    <button @onclick="UnToggleMenu">Back</button>
+                    <p>You are out of energy please refill by sleep or take a drink from your bag</p>
+                } else {
+                    <div class="pccontainer">
+                        <div class="globalshopheader">
+                            <button @onclick="UnToggleMenu">Back</button>
+                        </div>
+                        <div class="d-flex h-100">
+                            <div class="w-25 h-100">
+                                <ul>
+                                    @foreach(CoursesItem Languages in Player.CodesLanguagesOwned) {
+                                        <p @onclick="() => RandomCode.LoadCodeLanguage(Languages.Id)" style="cursor:pointer ">@Languages.Name</p>
+                                    }
+                                </ul>
+                            </div>
+                            <textarea id="pcscreen" class="textcodecontainer" readonly placeholder="Click me to start coding" value="@Game.text" @onkeypress="@(() => {Game.RandomText(); Game.IncreaseStats(); ScrollWindow(); })"></textarea>
+                        </div>
+                    </div>
+                }
+            } else if (SelectedMenu == 4) {
+                <div class="coursesitemcontainer shop">
+                    <div class="globalshopheader">
+                        <button @onclick="UnToggleMenu">Back</button>
+                        <input value="www.Udemy.com" />
+                        <p>Best Browser</p>
+                    </div>
+                    <div class="shopitemcontainer">
+                        @foreach(CoursesItem item in CoursesShop.CourseItems) {
+                            <div class="item">
+                                <img src="@item.LocalImg" class="itemimg" />
+                                <p>@item.Name</p>
+                                <p>Price: @item.Price $</p>
+                                @if (Player.CodesLanguagesOwned.Contains(item))
+                                {
+                                
+                                    <button class="itembtn">Course Owned</button>
+                                }
+                                else if (AtmMachine.Balance < item.Price)
+                                {
+                                    <button class="itembtn">Not enough money</button>
+                                }
+                                else
+                                {
+                                    <button @onclick="() => Player.BuyCourse(item)" class="itembtn">Buy</button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            } else if (SelectedMenu == 5) {
+                <div class="pccontainer">
+                    <button @onclick="UnToggleMenu">Back</button>
+                    <p>Achivements</p>
+                </div>
+            } else if (SelectedMenu == 6) {
+                <div class="pccontainer">
+                    <button @onclick="UnToggleMenu">Back</button>
+                    <p>FAQ</p>
+                </div>
+            } else if (SelectedMenu == 7) {
+                <div class="pccontainer">
+                    <button @onclick="UnToggleMenu">Back</button>
+                    <p>Settings</p>
+                </div>
+            } else if (SelectedMenu == 8) {
+                <div class="pccontainer bagmenu">
+                  
+                    <button @onclick="UnToggleMenu">Back</button>
+                    
+                    
+                    @if(Player.PlayerBag.Count == 0) {
+                        <p>The bag is empty, you can buy more items at the shop</p>
+                    } else {
+                        <div class="d-flex justify-content-evenly w-100"> 
+                            @foreach (FoodItems items in Player.PlayerBag)
+                            {
+                                <div class="d-flex flex-column align-items-center"> 
+                                    <img class="bagimg" src="@(items.LocalImg)" />
+                                    <p>@items.Name</p>
+                                    <button @onclick="() => {Player.FillUpEnergy(items); OnInitializedAsync();}">Drink</button>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                </div>
+            }
+           
+
+        }
+        
+    </div>
+
+    <div class="bottomcontainer">
+        <div class="bagcontainer">
+            <img @onclick="() => ToggleMenu(8)" src="./img/bag.png" class="bag" />
+        </div>
+        <div class="briefcasecontainer">
+            @if (Game.dollars < 1) {
+                <img src="./img/briefcaseempty.png" class="breifcase" />
+            } else {
+                <img src="./img/briefcasefull.png" class="breifcase" />
+            }
+            <p>@Game.dollars $</p>
+        </div>
+    </div>
+</div>
+
+@code{
+
+    public async void ScrollWindow() {
+        await JavaScript.InvokeAsync<Task>("ScrollWindow");
+    }
+
+    public async void SpawnFallingImg() {
+        await JavaScript.InvokeAsync<Task>("SpawnFallingImg");
+    }
+
+    public async void DecreaseEnergyBar()
+    {
+        await JavaScript.InvokeAsync<Task>("EnergyBar", Player.EnergyBurn, Player.Energy);
+    }
+
+    public async void HelperEnergybar() {
+        await JavaScript.InvokeAsync<Task>("TempHelperFunction", Player.Energy);
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        //Reads the JSON file Randomcode and populates CodeDB list from RandomCode.cs
+        RandomCode.CodeDB = await Http.GetFromJsonAsync<List<RandomCode>>("/RandomCode.json");
+
+        //Setting starting language currently 6 that is CSS
+        RandomCode.LoadCodeLanguage(6);
+        // Updates the energybar % green line when switching pages
+        await Task.Delay(1);
+        await JavaScript.InvokeAsync<Task>("TempHelperFunction", Player.Energy);
+    }
+
+    // PC Menu UI togglers
+    public int SelectedMenu { get; set; }
+
+    public void ToggleMenu(int selectedmenu)
+    {
+        SelectedMenu = selectedmenu;
+    }
+
+    public void UnToggleMenu()
+    {
+        SelectedMenu = 0;
+    }
+
+
+}
